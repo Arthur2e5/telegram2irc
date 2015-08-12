@@ -274,10 +274,10 @@ class MainBot(BotBase):
                 tel_target,
                 self.irc_tgcmdprefix != '' and msg.startswith(self.irc_tgcmdprefix) ?
                     msg.replace(self.irc_tgcmdprefix,'/',1) :
-                        self.msg_format.format(
-                            nick = irc_nick,
-                            msg = msg
-                        )
+                    self.msg_format.format(
+                        nick = irc_nick,
+                        msg = msg
+                    )
                 )
 
     @_handler
