@@ -271,12 +271,14 @@ class MainBot(BotBase):
 
         if tel_target is not None and irc_nick not in self.irc_blacklist:
             self.tel_connection.send_msg(
-                    tel_target,
-                    self.msg_format.format(
-                        nick = irc_nick,
-                        msg = msg
-                    )
-            )
+                tel_target,
+                self.irc_tgcmdprefix != '' and msg.startswith(self.irc_tgcmdprefix) ?
+                    msg.replace(self.irc_tgcmdprefix,'/',1) :
+                        self.msg_format.format(
+                            nick = irc_nick,
+                            msg = msg
+                        )
+                )
 
     @_handler
     def irc_on_nickinuse(self, connection, event):
@@ -313,31 +315,42 @@ class MainBot(BotBase):
             self.send_help(from_peer)
             return
 
-        if irc_target is not None and \
-                from_peer not in self.tel_blacklist and \
-                'user#'+from_peer_id not in self.tel_blacklist :
-            nick = self.get_usernick(from_peer) or \
-                    self.get_usernick(from_peer_id) or \
-                    from_peer.replace(' ', '_')
+        if irc_target is None or \
+                from_peer in self.tel_blacklist or \
+                'user#'+from_peer_id in self.tel_blacklist :
+            return
 
-            lines = content.split('\n')
-            for line in lines:
-                for seg in split_message(line, 300):
-                    self.irc_connection.privmsg(irc_target,
-                            self.msg_format.format(nick=nick, msg=seg))
-                    time.sleep(1)
+        nick = self.get_usernick(from_peer) or \
+                self.get_usernick(from_peer_id) or \
+                from_peer.replace(' ', '_')
+
+        if content.startswith('/raw ') and self.tel_allowraw:
+            self.irc_connection.privmsg(irc_target,
+                self.msg_format.format(nick=nick, msg='/raw msg:'))
+            self.irc_connection.privmsg(irc_target,
+                content.split('\n')[0].replace('/raw ','',1))
+            return
+
+        lines = content.split('\n')
+        for line in lines:
+            for seg in split_message(line, 300):
+                self.irc_connection.privmsg(irc_target,
+                        self.msg_format.format(nick=nick, msg=seg))
+                time.sleep(1)
 
 def main():
     init_args = {
         'tel_server': config['telegram']['server'],
         'tel_port': config['telegram']['port'],
         'tel_blacklist': config['telegram']['blacklist'],
+        'tel_allowraw': config['telegram']['allowraw']
         'irc_blacklist': config['irc']['blacklist'],
         'irc_server': config['irc']['server'],
         'irc_port': config['irc']['port'],
         'irc_nick': config['irc']['nick'],
         'irc_usessl': config['irc']['ssl'],
         'irc_password': config['irc']['password'],
+        'irc_tgcmdprefix': config['irc']['tgcmdprefix'],
         'bindings': config['bindings'],
     }
 
