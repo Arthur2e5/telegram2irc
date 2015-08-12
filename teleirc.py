@@ -272,12 +272,11 @@ class MainBot(BotBase):
         if tel_target is not None and irc_nick not in self.irc_blacklist:
             self.tel_connection.send_msg(
                 tel_target,
-                self.irc_tgcmdprefix != '' and msg.startswith(self.irc_tgcmdprefix) ?
-                    msg.replace(self.irc_tgcmdprefix,'/',1) :
-                    self.msg_format.format(
+                msg.replace(self.irc_tgcmdprefix,'/',1) if \
+                (self.irc_tgcmdprefix != '' and msg.startswith(self.irc_tgcmdprefix)) else \
+                self.msg_format.format(
                         nick = irc_nick,
                         msg = msg
-                    )
                 )
 
     @_handler
